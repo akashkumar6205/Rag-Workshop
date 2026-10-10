@@ -1,0 +1,427 @@
+==============================================================
+THEORY OF COMPUTATION (TOC) - UNIT 1 NOTES
+RGPV Syllabus: Introduction to Automata / Finite Automata
+==============================================================
+
+SYLLABUS TOPICS
+---------------
+Alphabets, Strings, Languages; Finite State Machine (FSM);
+Transition Graph and Transition Table; DFA; NFA;
+Equivalence of DFA and NFA; NFA with epsilon moves;
+Mealy and Moore Machines; Minimization of DFA.
+
+
+1. BASIC TERMS
+--------------
+Alphabet (Sigma): Finite non-empty set of symbols.
+    Example: Sigma = {0, 1}, Sigma = {a, b}
+
+String: Finite sequence of symbols from an alphabet.
+    Example: 0110, abba
+    |w| = length of string w
+    epsilon = empty string, |epsilon| = 0
+
+Language: Set of strings over an alphabet.
+    Example: L = {w | w has even number of 0s}
+
+Sigma*  = set of all strings (including epsilon) over Sigma
+Sigma+  = Sigma* - {epsilon}
+
+Operations on strings/languages:
+  - Concatenation: xy
+  - Union: L1 U L2
+  - Intersection, Complement
+  - Kleene Closure: L* = L0 U L1 U L2 ...
+  - Positive Closure: L+ = L1 U L2 ...
+  - Reversal
+
+
+2. FINITE STATE MACHINE (FSM) / FINITE AUTOMATA
+-----------------------------------------------
+A finite automaton is the simplest model of computation with
+limited memory. It reads an input string symbol by symbol and
+either accepts or rejects it.
+
+Types:
+  (a) FA without output  -> DFA, NFA, NFA-epsilon (acceptors)
+  (b) FA with output     -> Mealy, Moore machines (transducers)
+
+
+3. DETERMINISTIC FINITE AUTOMATA (DFA)
+--------------------------------------
+Formal definition: 5-tuple M = (Q, Sigma, delta, q0, F)
+
+  Q      = finite set of states
+  Sigma  = input alphabet
+  delta  = transition function, delta: Q x Sigma -> Q
+  q0     = initial state (q0 in Q)
+  F      = set of final/accepting states (F subset of Q)
+
+Properties:
+  - Exactly ONE transition for each (state, symbol) pair.
+  - No epsilon moves.
+
+Language accepted: L(M) = { w | delta*(q0, w) is in F }
+
+Representation:
+  1. Transition Diagram (graph): circles = states,
+     double circle = final state, arrow into q0 = start.
+  2. Transition Table (matrix): rows = states, columns = symbols.
+
+Example 1: DFA accepting strings ending in "01" over {0,1}
+  States: q0, q1, q2 (q2 final)
+
+  State | 0  | 1
+  ------+----+----
+  ->q0  | q1 | q0
+   q1   | q1 | q2
+  *q2   | q1 | q0
+
+Example 2: DFA for strings with even number of 0s
+  States: q0 (even, start & final), q1 (odd)
+  q0 --0--> q1,  q1 --0--> q0,  q0 --1--> q0,  q1 --1--> q1
+
+
+4. NON-DETERMINISTIC FINITE AUTOMATA (NFA)
+------------------------------------------
+Formal definition: M = (Q, Sigma, delta, q0, F)
+  delta: Q x Sigma -> 2^Q  (power set of Q)
+
+Properties:
+  - Zero, one or many transitions possible for a (state, symbol).
+  - A string is accepted if AT LEAST ONE path leads to a final state.
+  - Easier to design than DFA; same power as DFA.
+
+DFA vs NFA:
+  DFA                          | NFA
+  -----------------------------+------------------------------
+  One next state per input     | Multiple next states possible
+  delta: Q x Sigma -> Q        | delta: Q x Sigma -> 2^Q
+  No dead-end ambiguity        | Can have missing transitions
+  More states may be needed    | Fewer states usually
+  Harder to design             | Easier to design
+
+
+5. EQUIVALENCE OF DFA AND NFA (SUBSET CONSTRUCTION)
+---------------------------------------------------
+Theorem: Every NFA has an equivalent DFA.
+If NFA has n states, DFA has at most 2^n states.
+
+Steps to convert NFA to DFA:
+  1. Start state of DFA = {q0}.
+  2. For each new DFA state (a set of NFA states) and each input
+     symbol, find the union of NFA transitions of its members.
+  3. Add any new set found as a new DFA state.
+  4. Repeat until no new states appear.
+  5. Any DFA state containing an NFA final state is final.
+
+Example: NFA with q0 --0--> {q0,q1}, q0 --1--> {q0}, q1 --1--> {q2}
+  (q2 final). Build the table starting from {q0}:
+  {q0}       --0--> {q0,q1}   --1--> {q0}
+  {q0,q1}    --0--> {q0,q1}   --1--> {q0,q2}
+  {q0,q2}    --0--> {q0,q1}   --1--> {q0}
+  Final states of DFA: {q0,q2}
+
+
+6. NFA WITH EPSILON MOVES (epsilon-NFA)
+---------------------------------------
+delta: Q x (Sigma U {epsilon}) -> 2^Q
+Machine can change state without reading input.
+
+Epsilon-closure(q): set of all states reachable from q using only
+epsilon transitions (includes q itself).
+
+Conversion epsilon-NFA to NFA:
+  1. Compute epsilon-closure of every state.
+  2. delta'(q, a) = epsilon-closure( delta( epsilon-closure(q), a ) )
+  3. A state becomes final if its epsilon-closure contains a
+     final state.
+Then convert NFA to DFA by subset construction.
+
+
+7. FA WITH OUTPUT: MEALY AND MOORE MACHINES
+-------------------------------------------
+Mealy Machine: M = (Q, Sigma, Delta, delta, lambda, q0)
+  - Output depends on CURRENT STATE and CURRENT INPUT.
+  - lambda: Q x Sigma -> Delta
+  - Output length = input length.
+
+Moore Machine: M = (Q, Sigma, Delta, delta, lambda, q0)
+  - Output depends ONLY on CURRENT STATE.
+  - lambda: Q -> Delta
+  - Output length = input length + 1 (initial output for q0).
+
+Comparison:
+  Moore                        | Mealy
+  -----------------------------+------------------------------
+  Output depends on state      | Output depends on state + input
+  Output on states             | Output on transitions
+  More states usually          | Fewer states usually
+  Output length = n + 1        | Output length = n
+
+Conversion Moore -> Mealy:
+  For each transition into state q, output = output of q.
+Conversion Mealy -> Moore:
+  Split a state if it is reached with different outputs; create
+  one state for each (state, output) pair.
+
+Example: Mealy machine that outputs 1's complement of binary input:
+  Single state q0 : 0/1 and 1/0 (input/output)
+
+
+8. MINIMIZATION OF DFA
+----------------------
+Goal: Obtain an equivalent DFA with the minimum number of states.
+
+Steps (Table-Filling / Partition Method):
+  1. Remove unreachable states (not reachable from q0).
+  2. Partition states into two groups: Final and Non-final (P0).
+  3. Refine: two states are in the same group only if, for every
+     input symbol, they move into the same group.
+  4. Repeat until partition no longer changes (Pk = Pk+1).
+  5. Each group becomes one state in the minimized DFA.
+
+Notes:
+  - States in the same final group are "equivalent".
+  - Minimal DFA for a language is UNIQUE (up to renaming states).
+  - Two DFAs are equivalent if their minimal DFAs are identical.
+
+
+9. IMPORTANT POINTS FOR EXAM
+----------------------------
+  - DFA, NFA and epsilon-NFA all accept exactly the REGULAR languages.
+  - NFA to DFA: worst case 2^n states.
+  - DFA has no epsilon transitions and no missing transitions
+    (add a dead/trap state if needed).
+  - Moore output length = n+1; Mealy output length = n.
+  - Finite automata cannot count unboundedly (e.g., a^n b^n is
+    NOT regular).
+
+
+10. FREQUENTLY ASKED QUESTIONS (RGPV)
+-------------------------------------
+  Q1. ==============================================================
+THEORY OF COMPUTATION (TOC) - UNIT 1 NOTES
+RGPV Syllabus: Introduction to Automata / Finite Automata
+==============================================================
+
+SYLLABUS TOPICS
+---------------
+Alphabets, Strings, Languages; Finite State Machine (FSM);
+Transition Graph and Transition Table; DFA; NFA;
+Equivalence of DFA and NFA; NFA with epsilon moves;
+Mealy and Moore Machines; Minimization of DFA.
+
+
+1. BASIC TERMS
+--------------
+Alphabet (Sigma): Finite non-empty set of symbols.
+    Example: Sigma = {0, 1}, Sigma = {a, b}
+
+String: Finite sequence of symbols from an alphabet.
+    Example: 0110, abba
+    |w| = length of string w
+    epsilon = empty string, |epsilon| = 0
+
+Language: Set of strings over an alphabet.
+    Example: L = {w | w has even number of 0s}
+
+Sigma*  = set of all strings (including epsilon) over Sigma
+Sigma+  = Sigma* - {epsilon}
+
+Operations on strings/languages:
+  - Concatenation: xy
+  - Union: L1 U L2
+  - Intersection, Complement
+  - Kleene Closure: L* = L0 U L1 U L2 ...
+  - Positive Closure: L+ = L1 U L2 ...
+  - Reversal
+
+
+2. FINITE STATE MACHINE (FSM) / FINITE AUTOMATA
+-----------------------------------------------
+A finite automaton is the simplest model of computation with
+limited memory. It reads an input string symbol by symbol and
+either accepts or rejects it.
+
+Types:
+  (a) FA without output  -> DFA, NFA, NFA-epsilon (acceptors)
+  (b) FA with output     -> Mealy, Moore machines (transducers)
+
+
+3. DETERMINISTIC FINITE AUTOMATA (DFA)
+--------------------------------------
+Formal definition: 5-tuple M = (Q, Sigma, delta, q0, F)
+
+  Q      = finite set of states
+  Sigma  = input alphabet
+  delta  = transition function, delta: Q x Sigma -> Q
+  q0     = initial state (q0 in Q)
+  F      = set of final/accepting states (F subset of Q)
+
+Properties:
+  - Exactly ONE transition for each (state, symbol) pair.
+  - No epsilon moves.
+
+Language accepted: L(M) = { w | delta*(q0, w) is in F }
+
+Representation:
+  1. Transition Diagram (graph): circles = states,
+     double circle = final state, arrow into q0 = start.
+  2. Transition Table (matrix): rows = states, columns = symbols.
+
+Example 1: DFA accepting strings ending in "01" over {0,1}
+  States: q0, q1, q2 (q2 final)
+
+  State | 0  | 1
+  ------+----+----
+  ->q0  | q1 | q0
+   q1   | q1 | q2
+  *q2   | q1 | q0
+
+Example 2: DFA for strings with even number of 0s
+  States: q0 (even, start & final), q1 (odd)
+  q0 --0--> q1,  q1 --0--> q0,  q0 --1--> q0,  q1 --1--> q1
+
+
+4. NON-DETERMINISTIC FINITE AUTOMATA (NFA)
+------------------------------------------
+Formal definition: M = (Q, Sigma, delta, q0, F)
+  delta: Q x Sigma -> 2^Q  (power set of Q)
+
+Properties:
+  - Zero, one or many transitions possible for a (state, symbol).
+  - A string is accepted if AT LEAST ONE path leads to a final state.
+  - Easier to design than DFA; same power as DFA.
+
+DFA vs NFA:
+  DFA                          | NFA
+  -----------------------------+------------------------------
+  One next state per input     | Multiple next states possible
+  delta: Q x Sigma -> Q        | delta: Q x Sigma -> 2^Q
+  No dead-end ambiguity        | Can have missing transitions
+  More states may be needed    | Fewer states usually
+  Harder to design             | Easier to design
+
+
+5. EQUIVALENCE OF DFA AND NFA (SUBSET CONSTRUCTION)
+---------------------------------------------------
+Theorem: Every NFA has an equivalent DFA.
+If NFA has n states, DFA has at most 2^n states.
+
+Steps to convert NFA to DFA:
+  1. Start state of DFA = {q0}.
+  2. For each new DFA state (a set of NFA states) and each input
+     symbol, find the union of NFA transitions of its members.
+  3. Add any new set found as a new DFA state.
+  4. Repeat until no new states appear.
+  5. Any DFA state containing an NFA final state is final.
+
+Example: NFA with q0 --0--> {q0,q1}, q0 --1--> {q0}, q1 --1--> {q2}
+  (q2 final). Build the table starting from {q0}:
+  {q0}       --0--> {q0,q1}   --1--> {q0}
+  {q0,q1}    --0--> {q0,q1}   --1--> {q0,q2}
+  {q0,q2}    --0--> {q0,q1}   --1--> {q0}
+  Final states of DFA: {q0,q2}
+
+
+6. NFA WITH EPSILON MOVES (epsilon-NFA)
+---------------------------------------
+delta: Q x (Sigma U {epsilon}) -> 2^Q
+Machine can change state without reading input.
+
+Epsilon-closure(q): set of all states reachable from q using only
+epsilon transitions (includes q itself).
+
+Conversion epsilon-NFA to NFA:
+  1. Compute epsilon-closure of every state.
+  2. delta'(q, a) = epsilon-closure( delta( epsilon-closure(q), a ) )
+  3. A state becomes final if its epsilon-closure contains a
+     final state.
+Then convert NFA to DFA by subset construction.
+
+
+7. FA WITH OUTPUT: MEALY AND MOORE MACHINES
+-------------------------------------------
+Mealy Machine: M = (Q, Sigma, Delta, delta, lambda, q0)
+  - Output depends on CURRENT STATE and CURRENT INPUT.
+  - lambda: Q x Sigma -> Delta
+  - Output length = input length.
+
+Moore Machine: M = (Q, Sigma, Delta, delta, lambda, q0)
+  - Output depends ONLY on CURRENT STATE.
+  - lambda: Q -> Delta
+  - Output length = input length + 1 (initial output for q0).
+
+Comparison:
+  Moore                        | Mealy
+  -----------------------------+------------------------------
+  Output depends on state      | Output depends on state + input
+  Output on states             | Output on transitions
+  More states usually          | Fewer states usually
+  Output length = n + 1        | Output length = n
+
+Conversion Moore -> Mealy:
+  For each transition into state q, output = output of q.
+Conversion Mealy -> Moore:
+  Split a state if it is reached with different outputs; create
+  one state for each (state, output) pair.
+
+Example: Mealy machine that outputs 1's complement of binary input:
+  Single state q0 : 0/1 and 1/0 (input/output)
+
+
+8. MINIMIZATION OF DFA
+----------------------
+Goal: Obtain an equivalent DFA with the minimum number of states.
+
+Steps (Table-Filling / Partition Method):
+  1. Remove unreachable states (not reachable from q0).
+  2. Partition states into two groups: Final and Non-final (P0).
+  3. Refine: two states are in the same group only if, for every
+     input symbol, they move into the same group.
+  4. Repeat until partition no longer changes (Pk = Pk+1).
+  5. Each group becomes one state in the minimized DFA.
+
+Notes:
+  - States in the same final group are "equivalent".
+  - Minimal DFA for a language is UNIQUE (up to renaming states).
+  - Two DFAs are equivalent if their minimal DFAs are identical.
+
+
+9. IMPORTANT POINTS FOR EXAM
+----------------------------
+  - DFA, NFA and epsilon-NFA all accept exactly the REGULAR languages.
+  - NFA to DFA: worst case 2^n states.
+  - DFA has no epsilon transitions and no missing transitions
+    (add a dead/trap state if needed).
+  - Moore output length = n+1; Mealy output length = n.
+  - Finite automata cannot count unboundedly (e.g., a^n b^n is
+    NOT regular).
+
+
+10. FREQUENTLY ASKED QUESTIONS (RGPV)
+-------------------------------------
+  Q1. Define DFA and NFA. Differentiate between them.
+  Q2. Convert the given NFA to DFA.
+  Q3. Convert epsilon-NFA to NFA/DFA.
+  Q4. Design a DFA for a given language (e.g., strings ending in
+      "ab", divisible by 3, containing substring "101").
+  Q5. Differentiate Mealy and Moore machines; convert one to other.
+  Q6. Minimize the given DFA.
+  Q7. Explain the equivalence of NFA and DFA.
+
+==============================================================
+                        END OF UNIT 1
+==============================================================. Differentiate between them.
+  Q2. Convert the given NFA to DFA.
+  Q3. Convert epsilon-NFA to NFA/DFA.
+  Q4. Design a DFA for a given language (e.g., strings ending in
+      "ab", divisible by 3, containing substring "101").
+  Q5. Differentiate Mealy and Moore machines; convert one to other.
+  Q6. Minimize the given DFA.
+  Q7. Explain the equivalence of NFA and DFA.
+
+==============================================================
+                        END OF UNIT 1
+==============================================================
